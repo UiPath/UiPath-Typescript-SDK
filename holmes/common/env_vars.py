@@ -38,3 +38,15 @@ TEMPERATURE = float(os.environ.get("TEMPERATURE", "0.00000001"))
 STREAM_CHUNKS_PER_PARSE = int(
     os.environ.get("STREAM_CHUNKS_PER_PARSE", 80)
 )  # Empirical value with 6~ parsing calls. Consider using larger value if LLM response is long as to reduce markdown to section calls.
+
+UIPATH_TOKEN = os.environ.get("UIPATH_TOKEN", "")
+
+CONFLUENCE_BASE_URL = os.environ.get("CONFLUENCE_BASE_URL", "")
+JIRA_BASE_URL = os.environ.get("JIRA_BASE_URL", "")
+
+AZURE_APP_TENANT_ID = os.environ.get("AZURE_APP_TENANT_ID", "")
+AZURE_APP_CLIENT_ID = os.environ.get("AZURE_APP_CLIENT_ID", "")
+AZURE_APP_CLIENT_SECRET = os.environ.get("AZURE_APP_CLIENT_SECRET", "")
+
+KEY_VAULT_URL = os.environ.get("KEY_VAULT_URL", "")
+KEY_VAULT_SECRET_NAME = os.environ.get("KEY_VAULT_SECRET_NAME", "")
