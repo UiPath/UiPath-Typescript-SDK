@@ -14,17 +14,13 @@ from holmes.core.investigation_structured_output import (
     InputSectionsDataType,
     get_output_format_for_investigation,
     is_response_an_incorrect_tool_call,
-    process_response_into_sections,
 )
 from holmes.core.performance_timing import PerformanceTiming
-from holmes.utils.global_instructions import (
-    Instructions,
-    add_global_instructions_to_user_prompt,
-)
 from holmes.utils.tags import format_tags_in_string, parse_messages_tags
 from holmes.plugins.prompts import load_and_render_prompt
 from holmes.core.llm import LLM
 from openai import BadRequestError
+from openai._types import NOT_GIVEN
 from openai.types.chat.chat_completion_message_tool_call import (
     ChatCompletionMessageToolCall,
 )
@@ -34,11 +30,6 @@ from rich.console import Console
 from holmes.core.issue import Issue
 from holmes.core.runbooks import RunbookManager
 from holmes.core.tools import ToolExecutor
-from litellm.types.utils import Message
-from holmes.common.env_vars import ROBUSTA_API_ENDPOINT, STREAM_CHUNKS_PER_PARSE
-from holmes.core.investigation_structured_output import (
-    parse_markdown_into_sections_from_hash_sign,
-)
 
 
 class ToolCallResult(BaseModel):
@@ -80,6 +71,10 @@ class ResourceInstructionDocument(BaseModel):
     """
 
     url: str
+
+
+class Instructions(BaseModel):
+    instructions: List[str] = []
 
 
 class ResourceInstructions(BaseModel):
@@ -143,10 +138,12 @@ class ToolCallingLLM:
             perf_timing.measure(f"start iteration {i}")
             logging.debug(f"running iteration {i}")
             # on the last step we don't allow tools - we want to force a reply, not a request to run another tool
-            tools = None if i == max_steps else tools
-            tool_choice = "auto" if tools else None
+            tools = NOT_GIVEN if i == max_steps - 1 else tools
+            # tool_choice = None if tools == NOT_GIVEN else "auto"
+            tool_choice = None if tools == NOT_GIVEN else {"type": "auto"}
 
-            total_tokens = self.llm.count_tokens_for_message(messages)
+
+            total_tokens = self.llm.count_tokens_for_message(messages, tools)
             max_context_size = self.llm.get_context_window_size()
             maximum_output_token = self.llm.get_maximum_output_token()
             perf_timing.measure("count tokens")
@@ -154,7 +151,7 @@ class ToolCallingLLM:
             if (total_tokens + maximum_output_token) > max_context_size:
                 logging.warning("Token limit exceeded. Truncating tool responses.")
                 messages = self.truncate_messages_to_fit_context(
-                    messages, max_context_size, maximum_output_token
+                    messages, max_context_size, maximum_output_token, tools
                 )
                 perf_timing.measure("truncate_messages_to_fit_context")
 
@@ -168,7 +165,6 @@ class ToolCallingLLM:
                     response_format=response_format,
                     drop_params=True,
                 )
-                logging.debug(f"got response {full_response.to_json()}")
 
                 perf_timing.measure("llm.completion")
             # catch a known error that occurs with Azure and replace the error message with something more obvious to the user
@@ -183,7 +179,7 @@ class ToolCallingLLM:
                     raise
             response = full_response.choices[0]
 
-            response_message = response.message
+            response_message = response.get("message")
             if response_message and response_format:
                 # Litellm API is bugged. Stringify and parsing ensures all attrs of the choice are available.
                 dict_response = json.loads(full_response.to_json())
@@ -199,15 +195,26 @@ class ToolCallingLLM:
                     response_format = None
                     max_steps = max_steps + 1
                     continue
+            temp_response_message = response_message
+            # Modify the format if it's a tool response - Claude specific format
+            if temp_response_message.get("role") == "tool":
+                formatted_message = {
+                    "role": "tool",
+                    "content": {
+                        "call_id": temp_response_message.get("tool_call_id"),
+                        "result": {
+                            "content": temp_response_message.get("content")
+                        }
+                    }
+                }
+                messages.append(formatted_message)
+            else:
+                messages.append(temp_response_message)
 
-            messages.append(
-                response_message.model_dump(
-                    exclude_defaults=True, exclude_unset=True, exclude_none=True
-                )
-            )
-
-            tools_to_call = getattr(response_message, "tool_calls", None)
-            text_response = response_message.content
+            # tools_to_call = getattr(response_message, "tool_calls", None)
+            tools_to_call = response_message.get("tool_calls", None)
+            # text_response = response_message.content
+            text_response = response_message.get("content")
             if not tools_to_call:
                 # For chatty models post process and summarize the result
                 # this only works for calls where user prompt is explicitly passed through
@@ -249,10 +256,13 @@ class ToolCallingLLM:
                     tool_calls.append(tool_call_result)
                     messages.append(
                         {
-                            "tool_call_id": tool_call_result.tool_call_id,
                             "role": "tool",
-                            "name": tool_call_result.tool_name,
-                            "content": tool_call_result.result,
+                            "content": {
+                                "call_id": tool_call_result.tool_call_id,
+                                "result": {
+                                    "content": tool_call_result.result
+                                }
+                            }
                         }
                     )
                     perf_timing.measure(f"tool completed {tool_call_result.tool_name}")
@@ -260,20 +270,22 @@ class ToolCallingLLM:
     def _invoke_tool(
         self, tool_to_call: ChatCompletionMessageToolCall
     ) -> ToolCallResult:
-        tool_name = tool_to_call.function.name
+        # tool_name = tool_to_call.function.name
+        tool_name = tool_to_call.get("name")
         tool_params = None
         try:
-            tool_params = json.loads(tool_to_call.function.arguments)
+            # tool_params = json.loads(tool_to_call.function.arguments)
+            tool_params = tool_to_call.get("arguments")
         except Exception:
             logging.warning(
-                f"Failed to parse arguments for tool: {tool_name}. args: {tool_to_call.function.arguments}"
+                f"Failed to parse arguments for tool: {tool_name}. args: {tool_to_call.get('arguments')}"
             )
-        tool_call_id = tool_to_call.id
+        tool_call_id = tool_to_call.get("id")
         tool = self.tool_executor.get_tool_by_name(tool_name)
 
         if (not tool) or (tool_params is None):
             logging.warning(
-                f"Skipping tool execution for {tool_name}: args: {tool_to_call.function.arguments}"
+                f"Skipping tool execution for {tool_name}: args: {tool_to_call.get('arguments')}"
             )
             return ToolCallResult(
                 tool_call_id=tool_call_id,
@@ -340,13 +352,13 @@ class ToolCallingLLM:
 
     @sentry_sdk.trace
     def truncate_messages_to_fit_context(
-        self, messages: list, max_context_size: int, maximum_output_token: int
+        self, messages: list, max_context_size: int, maximum_output_token: int, tools: Optional[List[Dict[str, any]]] = None
     ) -> list:
         messages_except_tools = [
             message for message in messages if message["role"] != "tool"
         ]
         message_size_without_tools = self.llm.count_tokens_for_message(
-            messages_except_tools
+            messages_except_tools, tools
         )
 
         tool_call_messages = [
@@ -370,10 +382,8 @@ class ToolCallingLLM:
         )
 
         for message in messages:
-            if message["role"] == "tool" and len(message["content"]) > tool_size:
+            if message["role"] == "tool":
                 message["content"] = message["content"][:tool_size]
-                if "token_count" in message:
-                    del message["token_count"]
         return messages
 
     def call_stream(

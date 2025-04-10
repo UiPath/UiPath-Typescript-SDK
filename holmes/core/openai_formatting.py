@@ -27,25 +27,40 @@ def format_tool_to_open_ai_standard(
         if param_attributes.description is not None:
             tool_properties[param_name]["description"] = param_attributes.description
 
+    # result = {
+    #     "type": "function",
+    #     "function": {
+    #         "name": tool_name,
+    #         "description": tool_description,
+    #         "parameters": {
+    #             "properties": tool_properties,
+    #             "required": [
+    #                 param_name
+    #                 for param_name, param_attributes in tool_parameters.items()
+    #                 if param_attributes.required
+    #             ],
+    #             "type": "object",
+    #         },
+    #     },
+    # }
+
+    # Claude specific format
     result = {
-        "type": "function",
-        "function": {
-            "name": tool_name,
-            "description": tool_description,
-            "parameters": {
-                "properties": tool_properties,
-                "required": [
-                    param_name
-                    for param_name, param_attributes in tool_parameters.items()
-                    if param_attributes.required
-                ],
-                "type": "object",
-            },
+        "name": tool_name,
+        "description": tool_description,
+        "parameters": {
+            "properties": tool_properties,
+            "required": [
+                param_name
+                for param_name, param_attributes in tool_parameters.items()
+                if param_attributes.required
+            ],
+            "type": "object",
         },
     }
 
     # gemini doesnt have parameters object if it is without params
-    if tool_properties is None or tool_properties == {}:
+    if tool_properties is None:
         result["function"].pop("parameters")
 
     return result

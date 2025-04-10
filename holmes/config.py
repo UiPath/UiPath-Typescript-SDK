@@ -39,7 +39,9 @@ from holmes.common.env_vars import ROBUSTA_CONFIG_PATH
 from holmes.utils.definitions import RobustaConfig
 import re
 
-DEFAULT_CONFIG_LOCATION = os.path.expanduser("~/.holmes/config.yaml")
+from holmes.core.uipath_llm import UiPathCustomLLM
+
+DEFAULT_CONFIG_LOCATION = os.path.expanduser("~/.holmes/config.yaml") # Add relative path
 
 
 def get_env_replacement(value: str) -> Optional[str]:
@@ -113,7 +115,7 @@ def load_toolsets_definitions(
             logging.warning(f"Toolset '{name}' is invalid: {e}")
 
         except Exception:
-            logging.warning("Failed to load toolset: %s", name, exc_info=True)
+            logging.warning("Failed to load toolset: %s", name)
 
     return loaded_toolsets
 
@@ -633,5 +635,12 @@ class Config(RobustaBaseConfig):
         return cls(**merged_config)
 
     def _get_llm(self) -> LLM:
+        if self.model.startswith("uipath/"):
+            api_key = self.api_key.get_secret_value() if self.api_key else None
+            if not api_key:
+                raise ValueError("API token is required for UiPath LLM")
+            return UiPathCustomLLM(api_key)
+        
+        # Default case - use existing DefaultLLM
         api_key = self.api_key.get_secret_value() if self.api_key else None
         return DefaultLLM(self.model, api_key)

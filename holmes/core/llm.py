@@ -38,7 +38,7 @@ class LLM:
         pass
 
     @abstractmethod
-    def count_tokens_for_message(self, messages: list[dict]) -> int:
+    def count_tokens_for_message(self, messages: list[dict], tools: Optional[List[Dict[str, Any]]]) -> int:
         pass
 
     @abstractmethod
@@ -51,7 +51,7 @@ class LLM:
         temperature: Optional[float] = None,
         drop_params: Optional[bool] = None,
         stream: Optional[bool] = None,
-    ) -> Union[ModelResponse, CustomStreamWrapper]:
+    ) -> Any:
         pass
 
 

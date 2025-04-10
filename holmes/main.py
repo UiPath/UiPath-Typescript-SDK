@@ -257,7 +257,7 @@ def ask(
     slack_channel: Optional[str] = opt_slack_channel,
     # advanced options for this command
     system_prompt: Optional[str] = typer.Option(
-        "builtin://generic_ask.jinja2", help=system_prompt_help
+        "builtin://generic_alerts.jinja2", help=system_prompt_help
     ),
     show_tool_output: bool = typer.Option(
         False,

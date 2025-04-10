@@ -2,6 +2,7 @@
 #api_key: "..."
 
 #model: "azure/model-deployment-name"
+# model: "uipath/anthropic.claude-3-5-sonnet-20241022-v2:0"
 #api_key: "..."
 
 # try adding your own tools here!
