@@ -1,167 +1,195 @@
-<div align="center">
-  <h1 align="center">Solve alerts faster with an AI Agent</h1>
-  <p align="center">
-    <a href="#how-it-works"><strong>How it Works</strong></a> |
-    <a href="#quick-start---installing-holmesgpt"><strong>Quick Start</strong></a> |
-    <a href="https://www.youtube.com/watch?v=TfQfx65LsDQ"><strong>YouTube Demo</strong></a>
-  </p>
-</div>
+# UiPath TypeScript SDK
 
-Respond to alerts faster, using AI to automatically:
+[![npm version](https://badge.fury.io/js/@uipath%2Fsdk.svg)](https://badge.fury.io/js/@uipath%2Fsdk)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-- Fetch logs, traces, and metrics
-- Determine if issues are application or infrastructure related
-- Find upstream root-causes
+A TypeScript SDK that enables programmatic interaction with UiPath Cloud Platform services including processes, assets, buckets, context grounding, data services, jobs, and more.
 
-Using HolmesGPT, you can transform your existing alerts from this 👇
-
-![Before HolmesGPT](https://github.com/user-attachments/assets/931ebd71-ccd2-4b7b-969d-a061a99cec2d)
-
-To this 👇
-
-<img width="600" alt="example-holmesgpt-analysis" src="https://github.com/user-attachments/assets/d03df693-9eff-4d61-8947-2b101f648c3e" />
-
-### How it Works
-
-HolmesGPT connects AI models with live observability data and organizational knowledge. It uses an **agentic loop** to analyze data from multiple sources and identify possible root causes.
-
-<img width="3114" alt="holmesgpt-architecture-diagram" src="https://github.com/user-attachments/assets/f659707e-1958-4add-9238-8565a5e3713a" />
-
-### 📈 Data Sources
-
-The following data sources ("toolsets") are built-in. [Add your own](#customizing-holmesgpt).
-
-| Data Source    | Status         | Description                                                  |
-|----------------|----------------|--------------------------------------------------------------|
-| [Kubernetes](https://docs.robusta.dev/master/configuration/holmesgpt/toolsets/kubernetes.html)     | ✅             | Pod logs, K8s events, and resource status (kubectl describe) |
-| [Grafana](https://docs.robusta.dev/master/configuration/holmesgpt/toolsets/grafana.html)        | ✅             | [Logs (Loki)](https://docs.robusta.dev/master/configuration/holmesgpt/toolsets/grafana.html#loki) and [traces (Tempo)](https://docs.robusta.dev/master/configuration/holmesgpt/toolsets/grafana.html#tempo) |
-| [Helm](https://docs.robusta.dev/master/configuration/holmesgpt/toolsets/helm.html)           | ✅             | Release status, chart metadata, and values                   |
-| [ArgoCD](https://docs.robusta.dev/master/configuration/holmesgpt/toolsets/argocd.html)         | ✅             | Application sync status                                      |
-| [AWS RDS](https://docs.robusta.dev/master/configuration/holmesgpt/toolsets/aws.html)        | ✅             | Logs and events                                              |
-| [Prometheus](https://docs.robusta.dev/master/configuration/holmesgpt/toolsets/prometheus.html)     | ✅             | Currently supports investigating alerts; coming soon: automatically write PromQL and show related graphs |
-| [Internet](https://docs.robusta.dev/master/configuration/holmesgpt/toolsets/internet.html)       | ✅             | Public runbooks                                              |
-| [Confluence](https://docs.robusta.dev/master/configuration/holmesgpt/toolsets/confluence.html)     | ✅             | Private runbooks and documentation                           |
-| [OpenSearch](https://docs.robusta.dev/master/configuration/holmesgpt/toolsets/opensearch.html)     | 🟡 Beta        | Query logs and investigate issues with OpenSearch itself (using self-health diagnostics) |
-| NewRelic      | 🟡 Beta        | Investigate alerts, query tracing data                       |
-| Coralogix      | 🟡 Beta        | Logs                                                         |
-| GitHub        | 🟡 Beta        | Remediate alerts by opening pull requests with fixes         |
-
-[How to configure datasources with Robusta SaaS](https://docs.robusta.dev/master/configuration/holmesgpt/builtin_toolsets.html) (docs for CLI coming soon)
-
-[Request access to beta features](mailto:beta@robusta.dev)
-
-### 🔐 Data Privacy
-
-By design, HolmesGPT has **read-only access** and respects RBAC permissions. It is safe to run in production environments.
-
-We do **not** train HolmesGPT on your data. Data sent to Robusta SaaS is private to your account.
-
-For extra privacy, [bring an API key](docs/api-keys.md) for your own AI model.
-
-### 🚀 Bi-Directional Integrations With Your Tools
-
-Robusta can investigate alerts - or just answer questions - from the following sources:
-
-| Integration             | Status    | Notes |
-|-------------------------|-----------|-------|
-| Slack                   | 🟡 Beta   | [Demo.](https://www.loom.com/share/afcd81444b1a4adfaa0bbe01c37a4847) Tag HolmesGPT bot in any Slack message |
-| Prometheus/AlertManager | ✅        | Robusta SaaS or HolmesGPT CLI |
-| PagerDuty               | ✅        | HolmesGPT CLI only |
-| OpsGenie                | ✅        | HolmesGPT CLI only |
-| Jira                    | ✅        | HolmesGPT CLI only |
-
-### See it in Action
-
-<a href="https://www.loom.com/share/388d98aad1a04823b9ed50d0161a4819?sid=a2a669b4-f092-4067-adcb-c8527fbcaa90" target="_blank">
-<img style="max-width:300px;" src="https://cdn.loom.com/sessions/thumbnails/388d98aad1a04823b9ed50d0161a4819-0ced91a0e8f80dcb-full-play.gif">
-</a>
-
-## Quick Start - Installing HolmesGPT
-
-HolmesGPT can be installed two ways:
-
-1. [Robusta SaaS](https://platform.robusta.dev/signup/?utm_source=github&utm_medium=holmesgpt-readme&utm_content=ways_to_use_holmesgpt_section) (**recommended**) for the full HolmesGPT experience (Kubernetes required)
-2. [Desktop CLI](docs/installation.md) or [K9s plugin](docs/k9s.md) - no Kubernetes required, supports one-off investigations
-
-For advanced use cases, you can [import HolmesGPT as a Python library](docs/python.md) and use it from your own code. Before doing so, we recommend install HolmesGPT SaaS or CLI (see above) to learn your way around.
-
-### Using HolmesGPT
-
-- In the Robusta SaaS: Go to [platform.robusta.dev](https://platform.robusta.dev/signup/?utm_source=github&utm_medium=holmesgpt-readme&utm_content=ways_to_use_holmesgpt_section) and use Holmes from your browser
-- With HolmesGPT CLI: [setup an LLM API key](docs/api-keys.md) and ask Holmes a question 👇
+## Installation
 
 ```bash
-holmes ask "what pods are unhealthy and why?"
+npm install uipath-typescript-sdk
 ```
 
-Also supported:
+## Basic Usage
 
-<details>
-<summary>HolmesGPT CLI: investigate Prometheus alerts</summary>
+```typescript
+import { UiPath } from "uipath-typescript-sdk";
 
-Pull alerts from AlertManager and investigate them with HolmesGPT:
+// Initialize the SDK with required parameters
+const sdk = new UiPath({
+    // Base URL for the UiPath Platform (required)
+    baseUrl: "https://alpha.uipath.com/{orgName}/{tenantName}",
+    
+    // Authentication token (required)
+    // You can get this token from UiPath Automation Platform
+    secret: "your-access-token",
+    
+    // Optional debug logging
+    debug: false,
 
-```bash
-holmes investigate alertmanager --alertmanager-url http://localhost:9093
-# if on Mac OS and using the Holmes Docker image👇
-#  holmes investigate alertmanager --alertmanager-url http://docker.for.mac.localhost:9093
+    // Optional API configuration
+    apiConfig: {
+        UIPATH_TENANT_ID: "your-tenant-id",
+        UIPATH_ORGANIZATION_ID: "your-org-id"
+    },
+
+    // Optional folder configuration
+    folderConfig: {
+        UIPATH_FOLDER_KEY: "your-folder-key",
+        UIPATH_FOLDER_PATH: "your-folder-path"
+    }
+});
+
+// Example: Execute a process
+async function runProcess() {
+    try {
+        const job = await sdk.processes.invoke({
+            name: "MyProcess",
+            inputArguments: {
+                param1: "value1",
+                param2: 42,
+            },
+        });
+        
+        console.log("Job started:", job.id);
+        
+        // Monitor job status
+        const status = await sdk.jobs.get({ id: job.id });
+        console.log("Job status:", status.state);
+    } catch (error) {
+        console.error("Error running process:", error);
+    }
+}
+
+// Example: Work with assets
+async function getAsset() {
+    try {
+        const asset = await sdk.assets.retrieve({ name: "MyAsset" });
+        console.log("Asset value:", asset.value);
+    } catch (error) {
+        console.error("Error retrieving asset:", error);
+    }
+}
 ```
 
-<b>To investigate alerts in your browser, sign up for a free trial of [Robusta SaaS](https://platform.robusta.dev/signup/?utm_source=github&utm_medium=holmesgpt-readme&utm_content=ways_to_use_holmesgpt_section). </b>
+## Authentication
 
+The SDK requires an authentication token to interact with UiPath services. You can obtain this token in one of two ways:
 
-<b>Optional:</b> port-forward to AlertManager before running the command mentioned above (if running Prometheus inside Kubernetes)
+1. **User Access Token**: Generate a user access token from UiPath Automation Platform
+   - Log in to UiPath platform
+   - Get API access Bearer auth token
 
-```bash
-kubectl port-forward alertmanager-robusta-kube-prometheus-st-alertmanager-0 9093:9093 &
+2. **Service Account**:
+   - Use PAT token to access APIs, Navigate to profile -> preferences -> genrate pat token
+
+## Environment Variables
+
+The following environment variables are optional and can be used for additional functionality:
+
+Optional:
+- `UIPATH_JOB_ID` - Job ID for process execution context (optional)
+- `UIPATH_JOB_KEY` - Job key for process execution context (optional)
+- `UIPATH_ROBOT_KEY` - Robot key for automation context (optional)
+- `UIPATH_FOLDER_KEY` - Folder key for resource access (optional)
+- `UIPATH_FOLDER_PATH` - Folder path for resource access (optional)
+
+## Available Services
+
+The SDK provides access to various UiPath services:
+
+- `sdk.processes` - Manage and execute UiPath automation processes
+- `sdk.assets` - Work with assets (variables, credentials) stored in UiPath
+- `sdk.buckets` - Manage cloud storage containers for automation files
+- `sdk.connections` - Handle connections to external systems
+- `sdk.contextGrounding` - Work with semantic contexts for AI-enabled automation
+- `sdk.jobs` - Monitor and manage automation jobs
+- `sdk.queues` - Work with transaction queues
+- `sdk.actions` - Work with Action Center
+- `sdk.folders` - Manage folder structure and permissions
+- `sdk.llmGateway` - Access UiPath's LLM Gateway services
+- `sdk.entity` - Query and read entity data in data fabric / data service
+
+## Examples
+
+### Buckets Service
+
+```typescript
+// Download a file from a bucket
+try {
+    await sdk.buckets.download({
+        bucketKey: "my-bucket",
+        blobFilePath: "path/to/file.xlsx",
+        destinationPath: "local/path/file.xlsx",
+    });
+} catch (error) {
+    console.error("Error downloading file:", error);
+}
 ```
-</details>
 
-<details>
-<summary>HolmesGPT CLI: investigate PagerDuty and OpsGenie alerts</summary>
+### Context Grounding Service
 
-```bash
-holmes investigate opsgenie --opsgenie-api-key <OPSGENIE_API_KEY>
-holmes investigate pagerduty --pagerduty-api-key <PAGERDUTY_API_KEY>
-# to write the analysis back to the incident as a comment
-holmes investigate pagerduty --pagerduty-api-key <PAGERDUTY_API_KEY> --update
+```typescript
+// Search for contextual information
+try {
+    const results = await sdk.contextGrounding.search({
+        name: "my-knowledge-index",
+        query: "How do I process an invoice?",
+        numberOfResults: 5,
+    });
+    console.log("Search results:", results);
+} catch (error) {
+    console.error("Error searching context:", error);
+}
 ```
 
-For more details, run `holmes investigate <source> --help`
-</details>
+### Entity Service
 
-## Customizing HolmesGPT
+```typescript
+// Example: Query and read employee data with department expansion
+async function getEmployeeData() {
+    try {
+        // Query employees in a specific department with salary > 50000
+        const employeeQuery = await sdk.entity.queryByEntityId(
+            "95d53e79-5831-f011-8b3d-000d3a31aec5",
+            {
+                filter: "department.name eq 'Engineering' and salary gt 50000",
+                orderBy: ["lastName asc", "firstName asc"],
+                skip: 0,
+                take: 20
+            },
+            1  // Include one level of related entities (e.g., department details)
+        );
+        console.log("Engineers with salary > 50000:", employeeQuery.items);
 
-HolmesGPT can investigate many issues out of the box, with no customization or training. Optionally, you can extend Holmes to improve results:
+        // Read all employees with pagination
+        const allEmployees = await sdk.entity.readByEntityName(
+            "Employee",
+            0,     // Start from first record
+            100,   // Get up to 100 records
+            2      // Include two levels of related entities (e.g., department and location)
+        );
+        
+        // Process the results
+        allEmployees.items.forEach(employee => {
+            console.log(`${employee.firstName} ${employee.lastName} - ${employee.department.name} (${employee.department.location.city})`);
+        });
 
-**Custom Data Sources**: Add data sources (toolsets) to improve investigations
-   - If using Robusta SaaS: See [Robusta's docs](https://docs.robusta.dev/master/configuration/holmesgpt/custom_toolsets.html)
-   - If using the CLI: Use `-t` flag with [custom toolset files](./examples/custom_toolset.yaml) or add to `~/.holmes/config.yaml`
+        // Get total count
+        console.log(`Total employees: ${allEmployees.count}`);
+    } catch (error) {
+        console.error("Error fetching employee data:", error);
+    }
+}
 
-**Custom Runbooks**: Give HolmesGPT instructions for known alerts:
-   - If using Robusta SaaS: Use the Robusta UI to add runbooks
-   - If using the CLI: Use `-r` flag with [custom runbook files](./examples/custom_runbooks.yaml) or add to `~/.holmes/config.yaml`
+// Execute the function
+getEmployeeData();
+```
 
-You can save common settings and API Keys in a config file to avoid passing them from the CLI each time:
-
-<details>
-<summary>Reading settings from a config file</summary>
-
-You can save common settings and API keys in config file for re-use. Place the config file in <code>~/.holmes/config.yaml`</code> or pass it using the <code> --config</code>
-
-You can view an example config file with all available settings [here](config.example.yaml).
-</details>
-
-## License
-Distributed under the MIT License. See [LICENSE.txt](https://github.com/robusta-dev/holmesgpt/blob/master/LICENSE.txt) for more information.
-<!-- Change License -->
-
-## Support
-
-If you have any questions, feel free to message us on [robustacommunity.slack.com](https://bit.ly/robusta-slack)
-
-## How to Contribute
-
-Install HolmesGPT from source with Poetry. See [Installation](docs/installation.md) for details.
-
-For help, contact us on [Slack](https://bit.ly/robusta-slack)
+This example demonstrates:
+- Querying employees with specific conditions (department and salary)
+- Ordering results by multiple fields
+- Using expansion levels to include related entity data
+- Pagination support for large datasets
+- Processing and displaying nested entity data

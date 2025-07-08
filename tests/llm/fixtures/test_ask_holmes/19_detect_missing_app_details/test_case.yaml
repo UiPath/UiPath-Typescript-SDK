@@ -1,3 +1,0 @@
-user_prompt: "Why is frontend-certs-validator in a crashloopbackoff?"
-expected_output:
-  - There is no pod named "frontend-certs-validator."

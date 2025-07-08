@@ -1,0 +1,69 @@
+import { ApiClient } from './apiClient';
+import { Config } from '../config';
+import { ExecutionContext } from '../executionContext';
+import { RequestSpec } from '../models/requestSpec';
+
+export interface ApiResponse<T> {
+  data: T;
+}
+
+export class BaseService {
+  protected readonly config: Config;
+  protected readonly executionContext: ExecutionContext;
+  protected readonly apiClient: ApiClient;
+
+  constructor(config: Config, executionContext: ExecutionContext) {
+    this.config = config;
+    this.executionContext = executionContext;
+    this.apiClient = new ApiClient(config, executionContext);
+  }
+
+  protected async request<T>(method: string, path: string, options: RequestSpec = {}): Promise<ApiResponse<T>> {
+    switch (method.toUpperCase()) {
+      case 'GET':
+        return this.get<T>(path, options);
+      case 'POST':
+        return this.post<T>(path, options.data, options);
+      case 'PUT':
+        return this.put<T>(path, options.data, options);
+      case 'PATCH':
+        return this.patch<T>(path, options.data, options);
+      case 'DELETE':
+        return this.delete<T>(path, options);
+      default:
+        throw new Error(`Unsupported HTTP method: ${method}`);
+    }
+  }
+
+  protected async requestWithSpec<T>(spec: RequestSpec): Promise<ApiResponse<T>> {
+    if (!spec.method || !spec.url) {
+      throw new Error('Request spec must include method and url');
+    }
+    return this.request<T>(spec.method, spec.url, spec);
+  }
+
+  protected async get<T>(path: string, options: RequestSpec = {}): Promise<ApiResponse<T>> {
+    const response = await this.apiClient.get<T>(path, options);
+    return { data: response };
+  }
+
+  protected async post<T>(path: string, data?: unknown, options: RequestSpec = {}): Promise<ApiResponse<T>> {
+    const response = await this.apiClient.post<T>(path, data, options);
+    return { data: response };
+  }
+
+  protected async put<T>(path: string, data?: unknown, options: RequestSpec = {}): Promise<ApiResponse<T>> {
+    const response = await this.apiClient.put<T>(path, data, options);
+    return { data: response };
+  }
+
+  protected async patch<T>(path: string, data?: unknown, options: RequestSpec = {}): Promise<ApiResponse<T>> {
+    const response = await this.apiClient.patch<T>(path, data, options);
+    return { data: response };
+  }
+
+  protected async delete<T>(path: string, options: RequestSpec = {}): Promise<ApiResponse<T>> {
+    const response = await this.apiClient.delete<T>(path, options);
+    return { data: response };
+  }
+}
