@@ -21,6 +21,7 @@
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
     "build": "tsc",
+    "dev": "vite",
     "prepare": "npm run build",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
