@@ -29,6 +29,7 @@
     "lint": "eslint src/**/*.ts"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
     "@types/react-router-dom": "^5.3.3",
     "autoprefixer": "^10.4.21",
     "axios": "^1.6.7",
