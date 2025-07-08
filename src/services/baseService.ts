@@ -1,7 +1,7 @@
-import { ApiClient } from './apiClient';
-import { Config } from '../config';
-import { ExecutionContext } from '../executionContext';
-import { RequestSpec } from '../models/requestSpec';
+import { ApiClient } from '../core/http/apiClient';
+import { Config } from '../core/config/config';
+import { ExecutionContext } from '../core/context/executionContext';
+import { RequestSpec } from '../models/common/requestSpec';
 
 export interface ApiResponse<T> {
   data: T;
@@ -23,11 +23,11 @@ export class BaseService {
       case 'GET':
         return this.get<T>(path, options);
       case 'POST':
-        return this.post<T>(path, options.data, options);
+        return this.post<T>(path, options.body, options);
       case 'PUT':
-        return this.put<T>(path, options.data, options);
+        return this.put<T>(path, options.body, options);
       case 'PATCH':
-        return this.patch<T>(path, options.data, options);
+        return this.patch<T>(path, options.body, options);
       case 'DELETE':
         return this.delete<T>(path, options);
       default:

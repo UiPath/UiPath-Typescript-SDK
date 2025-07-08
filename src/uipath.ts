@@ -1,23 +1,10 @@
-import { Config, ConfigSchema } from './config';
-import { ExecutionContext } from './executionContext';
-import { ActionsService } from './services/actionsService';
-import { AssetsService } from './services/assetsService';
-import { BucketsService } from './services/bucketsService';
-import { CaseService } from './services/caseService';
-import { ConnectionsService } from './services/connectionsService';
-import { ContextGroundingService } from './services/contextGroundingService';
-import { DebugInstancesService } from './services/debugInstancesService';
-import { EntityService } from './services/entityService';
-import { FolderService } from './services/folderService';
-import { JobsService } from './services/jobsService';
-import { UiPathOpenAIService } from './services/llmGatewayService';
-import { MaestroProcessesService } from './services/maestroProcessesService';
-import { ProcessInstancesService } from './services/processInstancesService';
-import { ProcessesService } from './services/processesService';
-import { QueuesService } from './services/queuesService';
-import { InsightsService } from './services/insightsService';
 import { z } from 'zod';
-import { AuthService } from './services/authService';
+import { Config, ConfigSchema } from './core/config/config';
+import { ExecutionContext } from './core/context/executionContext';
+import { AuthService } from './core/auth/authService';
+import { MaestroProcessesService } from './services/maestro/maestroProcesses';
+import { ProcessInstancesService } from './services/maestro/processInstances';
+import { BaseService } from './services/baseService';
 
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
@@ -29,22 +16,8 @@ export class UiPath {
   private _initialized: boolean = false;
   private _storage: Map<string, string> = new Map();
 
-  public readonly actions: ActionsService;
-  public readonly assets: AssetsService;
-  public readonly buckets: BucketsService;
-  public readonly cases: CaseService;
-  public readonly connections: ConnectionsService;
-  public readonly contextGrounding: ContextGroundingService;
-  public readonly debugInstances: DebugInstancesService;
-  public readonly entity: EntityService;
-  public readonly folders: FolderService;
-  public readonly jobs: JobsService;
-  public readonly llmGateway: UiPathOpenAIService;
   public readonly maestroProcesses: MaestroProcessesService;
   public readonly processInstances: ProcessInstancesService;
-  public readonly processes: ProcessesService;
-  public readonly queues: QueuesService;
-  public readonly insights: InsightsService;
 
   constructor(config: Config) {
     try {
@@ -67,26 +40,18 @@ export class UiPath {
 
     this.executionContext = new ExecutionContext();
 
-    // Initialize services
-    const folderService = new FolderService(this.config, this.executionContext);
-    const bucketsService = new BucketsService(this.config, this.executionContext);
+    // Initialize services using the helper method
+    this.maestroProcesses = this.createService(MaestroProcessesService);
+    this.processInstances = this.createService(ProcessInstancesService);
+  }
 
-    this.actions = new ActionsService(this.config, this.executionContext);
-    this.assets = new AssetsService(this.config, this.executionContext);
-    this.buckets = bucketsService;
-    this.cases = new CaseService(this.config, this.executionContext);
-    this.connections = new ConnectionsService(this.config, this.executionContext);
-    this.contextGrounding = new ContextGroundingService(this.config, this.executionContext, folderService, bucketsService);
-    this.debugInstances = new DebugInstancesService(this.config, this.executionContext);
-    this.entity = new EntityService(this.config, this.executionContext);
-    this.folders = folderService;
-    this.jobs = new JobsService(this.config, this.executionContext);
-    this.llmGateway = new UiPathOpenAIService(this.config, this.executionContext);
-    this.maestroProcesses = new MaestroProcessesService(this.config, this.executionContext);
-    this.processInstances = new ProcessInstancesService(this.config, this.executionContext);
-    this.processes = new ProcessesService(this.config, this.executionContext);
-    this.queues = new QueuesService(this.config, this.executionContext);
-    this.insights = new InsightsService(this.config, this.executionContext);
+  /**
+   * Helper method to create service instances with config and execution context
+   * @param ServiceClass The service class to instantiate
+   * @returns Instance of the service
+   */
+  private createService<T extends BaseService>(ServiceClass: new (config: Config, executionContext: ExecutionContext) => T): T {
+    return new ServiceClass(this.config, this.executionContext);
   }
 
   /**
@@ -234,9 +199,9 @@ export class UiPath {
         // Update config and context with the new token
         this.config.secret = token.access_token;
         console.log('Config:', this.config);
-        this.executionContext.updateToken(token.access_token);
+        this.executionContext.set('token', token.access_token);
         console.log('ExecutionContext:', this.executionContext);
-        console.log('token later:', this.executionContext.getToken());
+        console.log('token later:', this.executionContext.get('token'));
 
         // Remove code and state from URL without refreshing the page
         const newUrl = window.location.pathname + window.location.hash;
